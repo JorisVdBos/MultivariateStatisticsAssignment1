@@ -31,7 +31,7 @@ getCountriesCoords <- function(countryNames){
 }
 
 plotEurope <- function(countriesCoords, scores, 
-                       RC = "RC1", 
+                       RC = 1, 
                        totalRC = 2,
                        extraTitle = NULL){
   plotData <- merge(countriesCoords, scores[, c("country_name", paste0("RC", RC))], by ="country_name", all.x = TRUE)
@@ -47,6 +47,6 @@ plotEurope <- function(countriesCoords, scores,
       #rect = element_blank(),
       plot.margin = unit(0 * c(-1.5, -1.5, -1.5, -1.5), "lines")) +
     scale_fill_gradient(name = "", low = "#FF0000FF", high = "#FFFF00FF", na.value = "grey50") +
-    labs(title = paste0("Score of PC", RC, " of ", totalRC, " by country", ifelse(!is.null(extraTitle), paste0(":\n    ", extraTitle), "")),
-         fill = paste0("Value of PC", RC))
+    labs(title = paste0("Score of rotated PC", RC, " of ", totalRC, " by country", ifelse(!is.null(extraTitle), paste0(":\n    ", extraTitle), "")),
+         fill = paste0("Value of rotated PC", RC))
 }
