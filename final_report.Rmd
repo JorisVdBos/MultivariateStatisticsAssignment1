@@ -1,0 +1,123 @@
+---
+title: "Multivariate Statistics: Assignment 1"
+author: "Group 3: Evert Cleenders, Joris Van den Bossche, Laura Caluwe, Nele Sluismans"
+date: "12 oktober 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(ggplot2)
+library(scales)
+library(psych)
+source("functions/plotEurope.R")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part One
+For the first part of the assignment, the dataset consists of the mean scores of questions of a survey, grouped by country.  
+```{r read1}
+politics <- read.csv("data/politics.txt", sep = "\t")
+dim(politics)
+kable(head(politics[, 1:12]), digits = 2)
+```
+
+## PCA Analysis
+A general PCA analysis is performed using the 'prcomp'  function:  
+```{r}
+politics_pca <- prcomp(politics[,-1], scale = TRUE)
+summary(politics_pca)
+```
+
+Visualizing the importance of the principle components:  
+```{r, echo = FALSE, fig.height = 3.5, fig.align="center"}
+summary_pca <- summary(politics_pca)
+var_importance_cumulative <- 
+  data.frame(variable = "cumulative",
+             number_of_PC = 1:length(colnames(summary_pca$importance)), 
+             value = summary_pca$importance[3,])
+var_importance_proportion <- 
+  data.frame(variable = "proportion",
+             number_of_PC = 1:length(colnames(summary_pca$importance)), 
+             value = summary_pca$importance[2,])
+ggplot(rbind(var_importance_cumulative, var_importance_proportion), 
+       aes(number_of_PC, value, col = variable)) +
+  geom_line() +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = 1:11, minor_breaks = NULL) +
+  scale_y_continuous(breaks = seq(0,1,.1), limits = c(0,1), labels=percent) +
+  labs(title = "Variance explained",
+       y = "Proportion", 
+       x = "Principal component", col = "")
+```
+
+To determine the amount of prinicipal components, a screeplot is made.  
+```{r, fig.height = 4, fig.align="center"}
+politics_pca_eigenvalues <- politics_pca$sdev^2
+politics_pca_eigenvalues
+```
+
+```{r, echo = FALSE, fig.height = 4, fig.align="center"}
+ggplot(
+  data.frame(PCA = 1:length(politics_pca_eigenvalues), 
+             eigen = politics_pca_eigenvalues),
+  aes(PCA, eigen)) + 
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks = 1:11, minor_breaks = NULL) +
+  scale_y_continuous(breaks = 0:6, minor_breaks = seq(0,6,0.2)) +
+  labs(title = "Scree plot", 
+       x = "Principal Component",
+       y = "Eigenvalue")
+```
+
+
+The rule of thumb excludes all eigenvalues less than one. However, the fourth principal component's eigenvalue is very close to one, so we decided to include it in the PCA breakdown. 
+
+## PCA Breakdown
+Using four principal components would explain 91% of the observed variance. The breakdown is computed using the function "principal" of the package "spych":  
+```{r}
+politics_pc_4 <- principal(politics[, -1], nfactors = 4)
+politics_pc_4$loadings
+```
+
+Using the loadings values, it is observed that principal component 1 is influenced by the questions about the trust in the own country's political institutions: "Do you trust your parliament?", "-legal system?", "-politicians?" and "political parties?". The second PC is influenced by the questions about the European Parliament: "Do you trust the European Parliament?" and "Would you say the European unification can go further or has it done too much?". PC3's influence is limited to the question: "Do you consider yourself on the left or right on the political scale?". Finally, PC4, is influenced by the questions about immigration: "Is immigration good?", "Is cultural life enriched by immigration?", and "Do immigrants make the country a better place to live?", and also the question about the United Nations: "Do you trust the United Nations?".  
+
+In all, the groups of questions do make sense. Plotting the scores for the pricipal components to the countries:  
+
+
+```{r}
+politics_pc_4_scores <- as.data.frame(politics_pc_4$scores)
+politics_pc_4_scores$Country <- politics$cntry
+kable(politics_pc_4_scores)
+```
+
+```{r, echo = FALSE, fig.width = 3, fig.align="center", fig.show='hold'}
+countryNames <- c("Belgium", "Bulgaria", "Switzerland", "Cyprus", "Czech Rep.", 
+                  "Germany", "Denmark", "Estonia", "Spain", "Finland", "France", 
+                  "United Kingdom", "Greece", "Croatia", "Hungary", "Israel", 
+                  "Latvia", "Netherlands", "Norway", "Poland", "Portugal", "Romania", 
+                  "Russia", "Sweden", "Slovenia","Slovakia", "Turkey", "Ukraine")
+politics_pc_4_scores$country_name <- countryNames
+countriesCoords <- getCountriesCoords(countryNames)
+plotEurope(countriesCoords, politics_pc_4_scores, 1, 4, "Trust in the own politics")
+plotEurope(countriesCoords, politics_pc_4_scores, 2, 4, "Trust in the European Parliament")
+```
+
+```{r, echo = FALSE, fig.width = 3, fig.align="center", fig.show='hold'}
+plotEurope(countriesCoords, politics_pc_4_scores, 3, 4, "Stance on the political scale \n    (negative = left, positive = right)")
+plotEurope(countriesCoords, politics_pc_4_scores, 4, 4, "Stance on immigration and trust in the United Nations")
+```
+
+
+
+
+# Part Two
+In part two the data consists of a correlation matrix:  
+```{r}
+cor_matrix <- read.csv("data/cor_matrix.txt", sep = " ")
+dim(cor_matrix)
+kable(cor_matrix[1:5, 1:5])
+```
+
+
